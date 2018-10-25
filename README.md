@@ -1,5 +1,5 @@
 # Introduction #
-This project is forked from [jonbakerfish/TweetScraper]https://github.com/jonbakerfish/TweetScraper
+This project is forked from [jonbakerfish/TweetScraper](https://github.com/jonbakerfish/TweetScraper)
 
 # Dependence #
 * [Scrapy](http://scrapy.org/) 
