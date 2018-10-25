@@ -33,7 +33,7 @@ This project is forked from [jonbakerfish/TweetScraper](https://github.com/jonba
 	| news **source:twitterfeed** | containing "news" and entered via TwitterFeed |
 
 ### Other parameters
-* `crawl_user[DEFAULT=False]`, if you want to crawl users, author's of tweets in the same time
+* `crawl_user[DEFAULT=True]`, if you want to crawl users, author's of tweets in the same time
 
 E.g.: `scrapy crawl TweetScraper -a query=foo -a crawl_user=True`
 
