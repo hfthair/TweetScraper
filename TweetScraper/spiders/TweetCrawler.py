@@ -153,6 +153,4 @@ class TweetScraper(CrawlSpider):
                     yield user
             except:
                 logger.error("Error tweet:\n")
-                import traceback
-                traceback.print_exc()
 

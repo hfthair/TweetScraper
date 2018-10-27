@@ -60,14 +60,14 @@ class SavetoMySQLPipeline(object):
                 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;"
 
         try:
-            print("Creating table...")
+            logger.info("Creating table...")
             self.cursor.execute(create_table_tweet_query)
             self.cursor.execute(create_table_user_query)
-        except mysql.connector.Error as err:
-            print(err.msg)
-        else:
             self.cnx.commit()
-            print("Successfully created table.")
+        except mysql.connector.Error as err:
+            logger.error(err.msg)
+        else:
+            logger.info("Successfully created table.")
 
     def find_one(self, table, value):
         select_query =  "SELECT ID FROM " + table + " WHERE ID = " + value + ";"
@@ -94,13 +94,13 @@ class SavetoMySQLPipeline(object):
         vals = [item[k]*1 for k in keys]
 
         try:
-            print("Inserting tweet {}...".format(item['ID']))
+            logger.debug("Inserting tweet {}...".format(item['ID']))
             self.cursor.execute(insert_query, vals)
             self.cnx.commit()
         except mysql.connector.Error as err:
-            print(err.msg)
+            logger.error(err.msg)
         else:
-            print("Successfully inserted.")
+            logger.debug("Successfully inserted.")
 
     def insert_user(self, item):
         ID = item['ID']
@@ -114,13 +114,13 @@ class SavetoMySQLPipeline(object):
         vals = (ID, name, screen_name, avatar)
 
         try:
-            print("Inserting user {}...".format(ID))
+            logger.debug("Inserting user {}...".format(ID))
             self.cursor.execute(insert_query, vals)
             self.cnx.commit()
         except mysql.connector.Error as err:
-            print(err.msg)
+            logger.error(err.msg)
         else:
-            print("Successfully inserted.")
+            logger.debug("Successfully inserted.")
 
 
     def process_item(self, item, spider):
