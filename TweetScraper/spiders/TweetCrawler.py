@@ -1,18 +1,15 @@
-from scrapy.spiders import CrawlSpider, Rule
-from scrapy.selector import Selector
-from scrapy.conf import settings
-from scrapy import http
-from scrapy.shell import inspect_response  # for debugging
 import re
 import json
 import time
 import logging
-try:
-    from urllib import quote  # Python 2.X
-except ImportError:
-    from urllib.parse import quote  # Python 3+
 
 from datetime import datetime
+from urllib.parse import quote
+
+from scrapy.spiders import CrawlSpider, Rule
+from scrapy.selector import Selector
+from scrapy import http
+from scrapy.shell import inspect_response  # for debugging
 
 from TweetScraper.items import Tweet, User
 

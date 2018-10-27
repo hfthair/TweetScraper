@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from scrapy.exceptions import DropItem
-from scrapy.conf import settings
+# from scrapy.conf import settings
 import logging
 import json
 import os
@@ -16,9 +16,14 @@ from TweetScraper.utils import mkdirs
 logger = logging.getLogger(__name__)
 
 class SavetoMySQLPipeline(object):
-
     ''' pipeline that save data to mysql '''
-    def __init__(self):
+
+    @classmethod
+    def from_crawler(cls, crawler):
+        settings = crawler.settings
+        return cls(settings)
+
+    def __init__(self, settings):
         # connect to mysql server
         host = settings['MYSQL_HOST']
         database = settings['MYSQL_DATABASE']
