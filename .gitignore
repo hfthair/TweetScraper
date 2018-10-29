@@ -3,3 +3,4 @@ pyenv/
 .vscode/
 
 *.pyc
+*.log
