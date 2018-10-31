@@ -2,7 +2,7 @@
 
 # !!! # Crawl responsibly by identifying yourself (and your website/e-mail) on the user-agent
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-USER_AGENT = 'Mozilla/5.0 (Windows NT 6.3; WOW64; rv:41.0) Gecko/20100101 Firefox/41.0'
+USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36'
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = False
@@ -20,6 +20,14 @@ ITEM_PIPELINES = {
     #'TweetScraper.pipelines.SaveToMongoPipeline':100, # replace `SaveToFilePipeline` with this to use MongoDB
     'TweetScraper.pipelines.SavetoMySQLPipeline':100, # replace `SaveToFilePipeline` with this to use MySQL
 }
+
+# Enable or disable downloader middlewares
+# See https://doc.scrapy.org/en/latest/topics/downloader-middleware.html
+# DOWNLOADER_MIDDLEWARES = {
+#    'scrapy.downloadermiddlewares.cookies.CookiesMiddleware': 543,
+# }
+
+# HTTPERROR_ALLOWED_CODES = [400]
 
 # settings for where to save data on disk
 SAVE_TWEET_PATH = './Data/tweet/'
