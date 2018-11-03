@@ -33,7 +33,7 @@ ITEM_PIPELINES = {
 SAVE_TWEET_PATH = './Data/tweet/'
 SAVE_USER_PATH = './Data/user/'
 
-# settings for mysql
+# for mysql
 MYSQL_HOST = 'localhost'
 MYSQL_DATABASE = 'tweets'
 MYSQL_USER = 'zhang'
@@ -41,6 +41,10 @@ MYSQL_USER = 'zhang'
 MYSQL_TABLE_TWEET = 'tweet'
 MYSQL_TABLE_USER = 'user'
 MYSQL_TABLE_FOLLOWING = 'following'
+
+# for twitter login
+TWITTER_ACCOUNT = 'zhang96084371'
+# TWITTER_PASSWORD = ''
 
 # # settings for mongodb
 # MONGODB_SERVER = "127.0.0.1"

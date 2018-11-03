@@ -1,21 +1,66 @@
 # Introduction #
-This project is forked from [jonbakerfish/TweetScraper](https://github.com/jonbakerfish/TweetScraper)
 
-add mysql support for personal use
+Crawl tweets from [Twitter Search](https://twitter.com/search-home) (*do not need twitter account*)
+
+Crawl following relationships from [Follow Page](https://twitter.com/name??/following) (*twitter account needed*)
+
+*part of this project is based on [jonbakerfish/TweetScraper](https://github.com/jonbakerfish/TweetScraper)*
 
 # Dependence #
 * [Scrapy](http://scrapy.org/) 
 * [mysql-connector-python](https://dev.mysql.com/downloads/connector/python/)
-* requests
-* pySocks
+* [js2py](https://pypi.org/project/Js2Py/)
 
-# Usage #
-1. In the root folder of this project, run command like: 
+# Spiders #
+1. TweetScraper: 
+
+	Crawl tweets from url [Twitter Search](https://twitter.com/search-home) which does not require login twitter account
+
+	*this spider is based on [jonbakerfish/TweetScraper](https://github.com/jonbakerfish/TweetScraper)*
 
 		scrapy crawl TweetScraper -a query="foo,#bar"
 
-	where `query` is a list of keywords seperated by comma and quoted by `"`. The query can be any thing (keyword, hashtag, etc.) you want to search in [Twitter Search](https://twitter.com/search-home). `TweetScraper` will crawl the search results of the query and save the tweet content and user information. You can also use the following operators in each query (from [Twitter Search](https://twitter.com/search-home)):
-	
+	where `query` is a list of keywords seperated by comma and quoted by `"`. The query can be any thing (keyword, hashtag, etc.) you want to search in [Twitter Search](https://twitter.com/search-home). `TweetScraper` will crawl the search results of the query and save the tweet content and user information. You can also use the `operators` from [Twitter Search Page](https://twitter.com/search-home) in each query.
+
+	#### Other parameters
+	* `crawl_user[DEFAULT=True]`, if you do not want to crawl the author's of tweets in the same time
+
+		E.g.:
+
+			scrapy crawl TweetScraper -a query=foo -a crawl_user=False
+
+2. following_crawler: 
+
+	Crawl the users followed by the author of tweets crawled by TweetScraper, the [URL](https://twitter.com/name??/following) requires login twitter account.
+
+		scrapy crawl following_crawler
+
+	*twitter account should be configured in settings.py*
+
+3. runner
+
+	runner.py is used to crawl history of tweets from users crawled by TweetScraper
+
+		python TweetScraper/runner.py
+
+4. unfinished feature
+
+	[crawl_user_with_api.py](https://github.com/hfthair/TweetScraper/blob/master/TweetScraper/crawl_user_with_api.py)
+
+	Requires:
+	* [requests](https://pypi.org/project/requests/)
+	* [pySocks](https://pypi.org/project/PySocks/)
+
+	Todo:
+	* time rate limits of twitter api
+
+# Settings #
+
+* Mysql
+* twitter account
+
+# Query Operators #
+
 	| Operator | Finds tweets... |
 	| --- | --- |
 	| twitter search | containing both "twitter" and "search". This is the default operator. |
@@ -35,14 +80,6 @@ add mysql support for personal use
 	| traffic **?** | containing "traffic" and asking a question. |
 	| hilarious **filter:links** | containing "hilarious" and linking to URLs. |
 	| news **source:twitterfeed** | containing "news" and entered via TwitterFeed |
-
-### Other parameters
-* `crawl_user[DEFAULT=True]`, if you want to crawl users, author's of tweets in the same time
-
-E.g.: `scrapy crawl TweetScraper -a query=foo -a crawl_user=True`
-
-2. python runner.py
-3. python crawl_user_with_api.py
 
 # Acknowledgement #
 Private project for self use

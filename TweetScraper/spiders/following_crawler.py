@@ -51,9 +51,14 @@ class UserCrawlerSpider(CrawlSpider):
 
         js_context.execute('var ui_metrics = {}()'.format(js_func_name))
 
+        account = self.settings.get('TWITTER_ACCOUNT')
+        password = self.settings.get('TWITTER_PASSWORD', None)
+        if not password:
+            raise Exception('Please add TWITTER_PASSWORD to settings.py')
+
         formdata = {
-            'session[username_or_email]': 'zhang96084371',
-            'session[password]': 'nicaicai',
+            'session[username_or_email]': account,
+            'session[password]': password,
             'ui_metrics': js_context.ui_metrics
         }
 
