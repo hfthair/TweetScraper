@@ -9,7 +9,7 @@ ROBOTSTXT_OBEY = False
 
 # settings for spiders
 BOT_NAME = 'TweetScraper'
-LOG_LEVEL = 'DEBUG'
+LOG_LEVEL = 'INFO'
 DOWNLOAD_HANDLERS = {'s3': None,} # from http://stackoverflow.com/a/31233576/2297751, TODO
 LOG_FILE = 'info.log'
 
@@ -40,6 +40,7 @@ MYSQL_USER = 'zhang'
 # MYSQL_PASSWORD = ''
 MYSQL_TABLE_TWEET = 'tweet'
 MYSQL_TABLE_USER = 'user'
+MYSQL_TABLE_FOLLOWING = 'following'
 
 # # settings for mongodb
 # MONGODB_SERVER = "127.0.0.1"

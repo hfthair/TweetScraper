@@ -20,17 +20,23 @@ class Tweet(Item):
     is_retweet = Field() # boolean if the tweet is just a retweet of another tweet
 
     has_image = Field() # True/False, whether a tweet contains images
-    image = Field()    # a list of image urls, empty if none
+    image = Field()     # a list of image urls, empty if none
 
     has_video = Field() # True/False, whether a tweet contains videos
-    video = Field()    # a list of video urls
+    video = Field()     # a list of video urls
 
     has_media = Field() # True/False, whether a tweet contains media (e.g. summary)
-    media = Field()    # a list of media
+    media = Field()     # a list of media
 
 
 class User(Item):
     ID = Field()            # user id
-    name = Field()          # user name
-    screen_name = Field()   # user screen name
+    name = Field()          # twitter's screen_name(the name you can @)
+    screen_name = Field()   # user name shown in bold on the profile card
     avatar = Field()        # avator url
+
+class Following(Item):
+    ID = Field()               # user id
+    following_id = Field()     # id of following user
+    following_name = Field()   # name of following user
+
