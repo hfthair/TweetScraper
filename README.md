@@ -1,9 +1,13 @@
 # Introduction #
 This project is forked from [jonbakerfish/TweetScraper](https://github.com/jonbakerfish/TweetScraper)
 
+add mysql support for personal use
+
 # Dependence #
 * [Scrapy](http://scrapy.org/) 
 * [mysql-connector-python](https://dev.mysql.com/downloads/connector/python/)
+* requests
+* pySocks
 
 # Usage #
 1. In the root folder of this project, run command like: 
@@ -37,6 +41,8 @@ This project is forked from [jonbakerfish/TweetScraper](https://github.com/jonba
 
 E.g.: `scrapy crawl TweetScraper -a query=foo -a crawl_user=True`
 
+2. python runner.py
+3. python crawl_user_with_api.py
 
 # Acknowledgement #
 Private project for self use
