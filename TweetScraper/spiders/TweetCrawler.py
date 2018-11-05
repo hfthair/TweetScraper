@@ -20,7 +20,7 @@ class TweetScraper(CrawlSpider):
     name = 'TweetScraper'
     allowed_domains = ['twitter.com']
 
-    def __init__(self, query, save_user=True):
+    def __init__(self, query, save_user=True, limit=None):
         self.url = "https://twitter.com/i/search/timeline?vertical=default" + \
                 "&q=%s&src=typd&include_available_features=1&include_entities=1" + \
                 "&lang=en&max_position=%s&reset_error_state=false"
@@ -28,6 +28,8 @@ class TweetScraper(CrawlSpider):
         #     self.url = self.url + "&f=tweets"
         self.query = query
         self.crawl_user = save_user
+        self.limit = limit
+        self.count = 0
 
     def start_requests(self):
         url = self.url % (quote(self.query), '')
@@ -37,7 +39,13 @@ class TweetScraper(CrawlSpider):
         # handle current page
         data = json.loads(response.body.decode("utf-8"))
         for item in self.parse_tweets_block(data['items_html']):
+            self.count = self.count + 1
             yield item
+
+        if self.limit is not None:
+            if self.count >= self.limit:
+                logger.info('end spider becuause of hitting limit {}'.format(self.limit))
+                return
 
         # get next page
         min_position = data['min_position']

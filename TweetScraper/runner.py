@@ -13,18 +13,30 @@ settings = get_project_settings()
 
 from spiders.TweetCrawler import TweetScraper
 
+table_all_tweets = 'history_tweet'
 
-def start_runner_inner(setti, name, q):
+def start_runner_inner(setti, name, limit, q):
     try:
         # settings
         runner = CrawlerProcess(setti)
-        runner.crawl(TweetScraper, query='from:{}'.format(name), save_user=False)
+        runner.crawl(TweetScraper, query='from:{}'.format(name), save_user=False, limit=limit)
         runner.start()
         q.put(None)
     except Exception as e:
         q.put(e)
 
 if __name__ == '__main__':
+    import sys
+    limit = None
+    if len(sys.argv) > 1:
+        limit = int(sys.argv[1])
+
+    i = input('Crawl history tweets with {} limits? (y/n)'.format(
+        'NO' if limit is None else limit
+    ))
+    if i.lower() != 'y':
+        print('User cancelled!')
+        sys.exit(0)
 
     database = settings.get('MYSQL_DATABASE')
     user = settings.get('MYSQL_USER')
@@ -42,12 +54,13 @@ if __name__ == '__main__':
 
     table_mark_name = 'temp_user_mark'
 
-    # create talbe if not exists
+    # create talbe to save the progress
     create_table_mark_query =   "CREATE TABLE IF NOT EXISTS `" + table_mark_name + "` (\
             `ID` CHAR(20) PRIMARY KEY,\
             `name` VARCHAR(140) NOT NULL\
             ) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;"
     try:
+        print('create table {} to save the progress so that you can stop/resume the runner at any time.'.format(table_mark_name))
         cursor.execute(create_table_mark_query)
         cnx.commit()
     except mysql.connector.Error as err:
@@ -55,8 +68,6 @@ if __name__ == '__main__':
     else:
         print("Successfully created table.")
 
-    table_all_tweets = 'history_tweet'
-    # todo: not working
     settings.set('MYSQL_TABLE_TWEET', table_all_tweets, 'spider')
     configure_logging(settings)
 
@@ -64,14 +75,28 @@ if __name__ == '__main__':
     query = "SELECT ID, name FROM {};".format(table_user)
     cursor.execute(query)
 
-    def start_runner(name):
+    def start_runner(name, limit):
         q = Queue()
-        p = Process(target=start_runner_inner, args=(settings, name, q))
-        p.start()
-        res = q.get()
-        p.join()
-        if res:
-            raise res
+        p = Process(target=start_runner_inner, args=(settings, name, limit, q))
+        try:
+            p.start()
+            res = q.get()
+            p.join()
+            if res:
+                raise res
+        except KeyboardInterrupt as e:
+            p.terminate()
+            print('Terminated by user.')
+            raise e
+
+    def should_skip(ID):
+        try:
+            cursor.execute("SELECT ID FROM {} WHERE ID = %s".format(table_mark_name), (ID, ))
+            if cursor.fetchone():
+                return True
+        except mysql.connector.Error:
+            traceback.print_exc()
+        return False
 
     scrawl_count = 0
     skip_count = 0
@@ -79,21 +104,19 @@ if __name__ == '__main__':
     for ID, name in cursor.fetchall():
         print('crawl ID {} name {} ...'.format(ID, name))
 
-        # check if crawled
         try:
-            cursor.execute("SELECT ID FROM {} WHERE ID = %s".format(table_mark_name), (ID, ))
-            if cursor.fetchone():
-                print('skip!')
+            # check if crawled
+            if should_skip(ID):
+                print('alread crawled, skip!')
                 skip_count = skip_count + 1
                 continue
-        except:
-            traceback.print_exc()
 
-        try:
-            start_runner(name)
+            start_runner(name, limit)
 
             cursor.execute("INSERT INTO {} (ID, name) VALUES (%s, %s)".format(table_mark_name), (ID, name))
             cnx.commit()
+        except KeyboardInterrupt:
+            sys.exit(-1)
         except:
             fail_count = fail_count + 1
             traceback.print_exc()
@@ -102,5 +125,12 @@ if __name__ == '__main__':
         print('finish {}'.format(name))
 
     print('Done. ===> finished {} | failed {} | skipped: {}.'.format(scrawl_count, fail_count, skip_count))
-    # todo: remove temp table if no fail
+
+    if fail_count == 0:
+        print('trying to delete temp table')
+        try:
+            cursor.execute("DROP TABLE `" + table_mark_name + "`;")
+            cnx.commit()
+        except:
+            print('error occurs when trying delete temp table!')
 
