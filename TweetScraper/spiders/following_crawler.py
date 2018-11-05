@@ -22,10 +22,10 @@ class UserCrawlerSpider(CrawlSpider):
     name = 'following_crawler'
     allowed_domains = ['twitter.com']
 
-    # I don't want my account to be locked
-    custom_settings = {
-        'DOWNLOAD_DELAY ': '0.25',
-    }
+    # # I don't want my account to be locked
+    # custom_settings = {
+    #     'DOWNLOAD_DELAY ': '0.25',
+    # }
 
     def start_requests(self):
         yield http.Request("https://twitter.com/login?lang=en", \
@@ -90,6 +90,8 @@ class UserCrawlerSpider(CrawlSpider):
         cursor = cnx.cursor()
         table_user = self.settings.get('MYSQL_TABLE_USER')
         cursor.execute("SELECT ID, name FROM {};".format(table_user))
+        self.total_cnt = cursor.rowcount
+        self.finish_cnt = 0
 
         for ID, name in cursor.fetchall():
             yield self.gen_request(ID, name, self.parse)
@@ -130,6 +132,10 @@ class UserCrawlerSpider(CrawlSpider):
 
         if has_more and min_position:
             yield self.gen_request(ID, response.meta['name'], self.parse, min_position)
+        else:
+            self.finish_cnt = self.finish_cnt + 1
+            logger.info('[{}/{}] crawled user id.{} name.{} .'.format(self.finish_cnt,
+                    self.total_cnt, ID, response.meta['name']))
 
 
 

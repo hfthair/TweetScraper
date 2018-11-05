@@ -98,11 +98,13 @@ if __name__ == '__main__':
             traceback.print_exc()
         return False
 
+    total = cursor.rowcount
     scrawl_count = 0
     skip_count = 0
     fail_count = 0
     for ID, name in cursor.fetchall():
-        print('crawl ID {} name {} ...'.format(ID, name))
+        curr = scrawl_count + skip_count + fail_count + 1
+        print('[{}/{}] Crawl ID {} name {} ...'.format(curr, total, ID, name))
 
         try:
             # check if crawled
