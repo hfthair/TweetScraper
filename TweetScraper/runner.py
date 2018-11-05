@@ -1,3 +1,10 @@
+'''
+this is a runner which will crawl history tweets of all users in table user.
+this runner will call the spider |TweetScraper|.
+history tweets will be saved in table |history_tweet|.
+limit can be set, usage:
+    python runner.py limit[int]
+'''
 import logging
 import traceback
 import mysql.connector
