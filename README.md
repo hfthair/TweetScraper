@@ -24,8 +24,9 @@ Crawl following relationships from [Follow Page](https://twitter.com/name??/foll
 
 	#### Other parameters
 	* `crawl_user[DEFAULT=True]`, if you do not want to crawl the author's of tweets in the same time
+	* `limit[default=None]`, end the spider when reach the limit
 
-		E.g.:
+	E.g.:
 
 			scrapy crawl TweetScraper -a query=foo -a crawl_user=False
 
@@ -41,7 +42,7 @@ Crawl following relationships from [Follow Page](https://twitter.com/name??/foll
 
 	runner.py is used to crawl history of tweets from users crawled by TweetScraper
 
-		python TweetScraper/runner.py
+		python TweetScraper/runner.py 500
 
 4. unfinished feature
 
