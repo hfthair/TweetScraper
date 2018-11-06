@@ -85,3 +85,8 @@ Crawl following relationships from [Follow Page](https://twitter.com/name??/foll
 
 # Acknowledgement #
 Private project for self use
+
+# Todo #
+* rename folders, spiders and runner
+* move twitter login part from spider to base
+* a better way of pause/resume
