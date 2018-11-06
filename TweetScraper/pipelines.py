@@ -38,7 +38,7 @@ class SavetoMySQLPipeline(object):
         self.table_name_tweet = settings['MYSQL_TABLE_TWEET']
         self.table_name_user = settings['MYSQL_TABLE_USER']
         self.table_following = settings['MYSQL_TABLE_FOLLOWING']
-        create_table_tweet_query =   "CREATE TABLE IF NOT EXISTS `" + self.table_name_tweet + "` (\
+        create_table_tweet_query = "CREATE TABLE IF NOT EXISTS `" + self.table_name_tweet + "` (\
                 `ID` CHAR(20) PRIMARY KEY,\
                 `url` VARCHAR(140) NOT NULL,\
                 `datetime` VARCHAR(22),\
@@ -57,18 +57,18 @@ class SavetoMySQLPipeline(object):
                 `is_reply` BOOLEAN DEFAULT 0, \
                 `is_retweet` BOOLEAN DEFAULT 0 \
                 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;"
-        create_table_user_query =   "CREATE TABLE IF NOT EXISTS `" + self.table_name_user + "` (\
+        create_table_user_query = "CREATE TABLE IF NOT EXISTS `" + self.table_name_user + "` (\
                 `ID` CHAR(20) PRIMARY KEY,\
                 `name` VARCHAR(140) NOT NULL,\
                 `screen_name` VARCHAR(140) NOT NULL,\
                 `avatar` VARCHAR(330) NOT NULL\
                 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;"
-        create_following_query =   "CREATE TABLE IF NOT EXISTS `" + self.table_following + "` ( \
+        create_following_query = "CREATE TABLE IF NOT EXISTS `" + self.table_following + "` ( \
                 `ID` CHAR(20) NOT NULL, \
                 `following_id` CHAR(20) NOT NULL, \
                 `following_name` VARCHAR(140) NOT NULL DEFAULT '', \
                 INDEX `index_id`(`ID`), \
-                UNIQUE KEY (`ID`, `following_id`) \
+                PRIMARY KEY (`ID`, `following_id`) \
                 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;"
 
         try:
