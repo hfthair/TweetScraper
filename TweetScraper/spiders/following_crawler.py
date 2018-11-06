@@ -1,13 +1,17 @@
 # -*- coding: utf-8 -*-
 import logging
+import os
+import sys
 import js2py
 import json
+import pickle
 import re
 
 import mysql.connector
 from mysql.connector import errorcode
 
 from scrapy import http
+from scrapy import signals
 from scrapy.selector import Selector
 from scrapy.spiders import CrawlSpider
 from urllib.parse import urlencode
@@ -27,7 +31,26 @@ class UserCrawlerSpider(CrawlSpider):
     #     'DOWNLOAD_DELAY ': '0.25',
     # }
 
+    def __init__(self, *a, **kw):
+        super(UserCrawlerSpider, self).__init__(*a, **kw)
+        self.finished = set()
+
+        # load progress from pickle
+        self.pickle_name = '{}.pickle'.format(self.name)
+        if os.path.isfile(self.pickle_name):
+            i = input('Progress file detected, load to current spider? (y/n)')
+            if i.lower() == 'y':
+                with open(self.pickle_name, 'rb') as f:
+                    self.finished = pickle.load(f)
+            else:
+                i = input('You are sure you want to ignore? (y/n)')
+                if i.lower() != 'y':
+                    sys.exit(0)
+
     def start_requests(self):
+        # can not connect in __init__ because crawler is not binded before construct
+        self.crawler.signals.connect(self.spider_closed, signal=signals.spider_closed)
+
         yield http.Request("https://twitter.com/login?lang=en", \
                         meta={'cookiejar': 1}, callback=self.pre_login)
 
@@ -91,10 +114,12 @@ class UserCrawlerSpider(CrawlSpider):
         table_user = self.settings.get('MYSQL_TABLE_USER')
         cursor.execute("SELECT ID, name FROM {};".format(table_user))
         self.total_cnt = cursor.rowcount
-        self.finish_cnt = 0
 
         for ID, name in cursor.fetchall():
-            yield self.gen_request(ID, name, self.parse)
+            if ID in self.finished:
+                logger.info('{}/{} already crawled, skip!'.format(name, ID))
+            else:
+                yield self.gen_request(ID, name, self.parse)
 
     def gen_request(self, ID, name, callback, max_pos='-1'):
         data = {
@@ -133,9 +158,12 @@ class UserCrawlerSpider(CrawlSpider):
         if has_more and min_position:
             yield self.gen_request(ID, response.meta['name'], self.parse, min_position)
         else:
-            self.finish_cnt = self.finish_cnt + 1
-            logger.info('[{}/{}] crawled user id.{} name.{} .'.format(self.finish_cnt,
+            self.finished.add(ID)
+            logger.info('[{}/{}] crawled user id.{} name.{} .'.format(len(self.finished),
                     self.total_cnt, ID, response.meta['name']))
 
-
+    def spider_closed(self, spider, reason):
+        logger.info('Spider closed, reason: {}'.format(reason))
+        with open(self.pickle_name, 'wb') as f:
+            pickle.dump(self.finished, f)
 

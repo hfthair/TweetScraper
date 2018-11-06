@@ -4,3 +4,4 @@ pyenv/
 
 *.pyc
 *.log
+*.pickle
