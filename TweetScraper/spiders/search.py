@@ -16,8 +16,8 @@ from TweetScraper.items import Tweet, User
 logger = logging.getLogger(__name__)
 
 
-class TweetScraper(CrawlSpider):
-    name = 'TweetScraper'
+class SearchSpider(CrawlSpider):
+    name = 'search'
     allowed_domains = ['twitter.com']
 
     def __init__(self, query, save_user=True, limit=None):

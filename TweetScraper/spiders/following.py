@@ -22,8 +22,8 @@ from scrapy.shell import inspect_response  # for debugging
 
 logger = logging.getLogger(__name__)
 
-class UserCrawlerSpider(CrawlSpider):
-    name = 'following_crawler'
+class FollowingSpider(CrawlSpider):
+    name = 'following'
     allowed_domains = ['twitter.com']
 
     # # I don't want my account to be locked
@@ -32,18 +32,18 @@ class UserCrawlerSpider(CrawlSpider):
     # }
 
     def __init__(self, *a, **kw):
-        super(UserCrawlerSpider, self).__init__(*a, **kw)
+        super(FollowingSpider, self).__init__(*a, **kw)
         self.finished = set()
 
         # load progress from pickle
         self.pickle_name = '{}.pickle'.format(self.name)
         if os.path.isfile(self.pickle_name):
-            i = input('Progress file detected, load to current spider? (y/n)')
+            i = input('Progress file detected, load to current spider? (y/n) ')
             if i.lower() == 'y':
                 with open(self.pickle_name, 'rb') as f:
                     self.finished = pickle.load(f)
             else:
-                i = input('You are sure you want to ignore? (y/n)')
+                i = input('You are sure you want to ignore? (y/n) ')
                 if i.lower() != 'y':
                     sys.exit(0)
 
@@ -162,8 +162,13 @@ class UserCrawlerSpider(CrawlSpider):
             logger.info('[{}/{}] crawled user id.{} name.{} .'.format(len(self.finished),
                     self.total_cnt, ID, response.meta['name']))
 
+    # todo: call this before shutdown for safety
     def spider_closed(self, spider, reason):
         logger.info('Spider closed, reason: {}'.format(reason))
+        print('Writing progress to file, please wait!')
         with open(self.pickle_name, 'wb') as f:
             pickle.dump(self.finished, f)
+        print('Done!')
+
+        print('Current progress: [{}/{}]'.format(len(self.finished), self.total_cnt))
 

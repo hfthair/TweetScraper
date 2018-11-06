@@ -12,15 +12,15 @@ Crawl following relationships from [Follow Page](https://twitter.com/name??/foll
 * [js2py](https://pypi.org/project/Js2Py/)
 
 # Spiders #
-1. TweetScraper: 
+1. Search Spider: 
 
 	Crawl tweets from url [Twitter Search](https://twitter.com/search-home) which does not require login twitter account
 
 	*this spider is based on [jonbakerfish/TweetScraper](https://github.com/jonbakerfish/TweetScraper)*
 
-		scrapy crawl TweetScraper -a query="foo,#bar"
+		scrapy crawl search -a query="foo,#bar"
 
-	where `query` is a list of keywords seperated by comma and quoted by `"`. The query can be any thing (keyword, hashtag, etc.) you want to search in [Twitter Search](https://twitter.com/search-home). `TweetScraper` will crawl the search results of the query and save the tweet content and user information. You can also use the `operators` from [Twitter Search Page](https://twitter.com/search-home) in each query.
+	where `query` is a list of keywords seperated by comma and quoted by `"`. The query can be any thing (keyword, hashtag, etc.) you want to search in [Twitter Search](https://twitter.com/search-home). `Search Spider` will crawl the search results of the query and save the tweet content and user information. You can also use the `operators` from [Twitter Search Page](https://twitter.com/search-home) in each query.
 
 	#### Other parameters
 	* `crawl_user[DEFAULT=True]`, if you do not want to crawl the author's of tweets in the same time
@@ -29,20 +29,20 @@ Crawl following relationships from [Follow Page](https://twitter.com/name??/foll
 		E.g.:
 
 		```
-		scrapy crawl TweetScraper -a query=foo -a crawl_user=False
+		scrapy crawl search -a query=foo -a crawl_user=False
 		```
 
 	* you can use JOBDIR parameter so that you can pause/resume crawls
 		```
-		scrapy crawl TweetScraper -a query=foo -s JOBDIR=dirname
+		scrapy crawl search -a query=foo -s JOBDIR=dirname
 		```
 		Note: *don't press ctrl+C more than once if you want the progress to be saved*
 
-2. following_crawler: 
+2. Following Spider: 
 
-	Crawl the users followed by the author of tweets crawled by TweetScraper, the [URL](https://twitter.com/name??/following) requires login twitter account.
+	Crawl the users followed by the author of tweets crawled by Search Spider, the [URL](https://twitter.com/name??/following) requires login twitter account.
 
-		scrapy crawl following_crawler
+		scrapy crawl following
 
 	*twitter account should be configured in settings.py*
 
@@ -50,7 +50,7 @@ Crawl following relationships from [Follow Page](https://twitter.com/name??/foll
 
 3. runner
 
-	runner.py is used to crawl history of tweets from users crawled by TweetScraper
+	runner.py is used to crawl history of tweets from users crawled by Search Spider
 
 		python TweetScraper/runner.py 500
 

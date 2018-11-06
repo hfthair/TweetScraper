@@ -1,6 +1,6 @@
 '''
 this is a runner which will crawl history tweets of all users in table user.
-this runner will call the spider |TweetScraper|.
+this runner will call the spider |Search Spider|.
 history tweets will be saved in table |history_tweet|.
 limit can be set, usage:
     python runner.py limit[int]
@@ -18,7 +18,7 @@ from scrapy.utils.log import configure_logging
 # this will init env, we have to call this before import spider, or there will be import error
 settings = get_project_settings()
 
-from spiders.TweetCrawler import TweetScraper
+from spiders.search import SearchSpider
 
 table_all_tweets = 'history_tweet'
 
@@ -26,7 +26,7 @@ def start_runner_inner(setti, name, limit, q):
     try:
         # settings
         runner = CrawlerProcess(setti)
-        runner.crawl(TweetScraper, query='from:{}'.format(name), save_user=False, limit=limit)
+        runner.crawl(SearchSpider, query='from:{}'.format(name), save_user=False, limit=limit)
         runner.start()
         q.put(None)
     except Exception as e:
@@ -61,6 +61,7 @@ if __name__ == '__main__':
 
     table_mark_name = 'temp_user_mark'
 
+    # todo: remove this table and use pickle
     # create talbe to save the progress
     create_table_mark_query =   "CREATE TABLE IF NOT EXISTS `" + table_mark_name + "` (\
             `ID` CHAR(20) PRIMARY KEY,\
