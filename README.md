@@ -26,9 +26,17 @@ Crawl following relationships from [Follow Page](https://twitter.com/name??/foll
 	* `crawl_user[DEFAULT=True]`, if you do not want to crawl the author's of tweets in the same time
 	* `limit[default=None]`, end the spider when reach the limit
 
-	E.g.:
+		E.g.:
 
-			scrapy crawl TweetScraper -a query=foo -a crawl_user=False
+		```
+		scrapy crawl TweetScraper -a query=foo -a crawl_user=False
+		```
+
+	* you can use JOBDIR parameter so that you can pause/resume crawls
+		```
+		scrapy crawl TweetScraper -a query=foo -s JOBDIR=dirname
+		```
+		Note: *don't press ctrl+C more than once if you want the progress to be saved*
 
 2. following_crawler: 
 
@@ -37,6 +45,8 @@ Crawl following relationships from [Follow Page](https://twitter.com/name??/foll
 		scrapy crawl following_crawler
 
 	*twitter account should be configured in settings.py*
+
+	*the progress will be saved to a pickle file by default, don't press ctrl+C multiple times*
 
 3. runner
 
