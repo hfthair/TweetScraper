@@ -1,6 +1,6 @@
 # Introduction #
 
-* Crawl tweets from [Twitter Search](https://twitter.com/search-home) about a topic (*do not need twitter account*)
+* Crawl tweets from [Twitter Search](https://twitter.com/search-home) about a topic
 
 * Crawl history tweets from users
 
@@ -102,3 +102,4 @@ Private project for self use
 * rename folders, spiders and runner
 * move twitter login part from spider to base
 * a better way of pause/resume
+* improve db performance
