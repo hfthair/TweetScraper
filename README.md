@@ -1,10 +1,12 @@
 # Introduction #
 
-Crawl tweets from [Twitter Search](https://twitter.com/search-home) (*do not need twitter account*)
+* Crawl tweets from [Twitter Search](https://twitter.com/search-home) about a topic (*do not need twitter account*)
 
-Crawl following relationships from [Follow Page](https://twitter.com/name??/following) (*twitter account needed*)
+* Crawl history tweets from users
 
-*part of this project is based on [jonbakerfish/TweetScraper](https://github.com/jonbakerfish/TweetScraper)*
+* Crawl following relationships from [Follow Page](https://twitter.com/{name}/following) (*twitter account needed*)
+
+	*part of this project is based on [jonbakerfish/TweetScraper](https://github.com/jonbakerfish/TweetScraper)*
 
 # Dependence #
 * [Scrapy](http://scrapy.org/) 
@@ -44,17 +46,17 @@ Crawl following relationships from [Follow Page](https://twitter.com/name??/foll
 
 		scrapy crawl following
 
-	*twitter account should be configured in settings.py*
+	*twitter account should be configured in [settings.py](https://github.com/hfthair/TweetScraper/blob/master/TweetScraper/settings.py)*
 
-	*the progress will be saved to a pickle file by default, don't press ctrl+C multiple times*
+	*the progress will be saved to a pickle file by default, don't press ctrl+C multiple times, do `NOT` use JOBDIR on this spider*
 
-3. runner
+3. Runner
 
-	runner.py is used to crawl history of tweets from users crawled by Search Spider
+	[runner.py](https://github.com/hfthair/TweetScraper/blob/master/TweetScraper/runner.py) is used to crawl history of tweets from users crawled by Search Spider
 
 		python TweetScraper/runner.py 500
 
-4. unfinished feature
+4. Unfinished Feature
 
 	[crawl_user_with_api.py](https://github.com/hfthair/TweetScraper/blob/master/TweetScraper/crawl_user_with_api.py)
 
