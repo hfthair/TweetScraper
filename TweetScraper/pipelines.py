@@ -22,6 +22,11 @@ class SavetoMySQLPipeline(object):
         return cls(settings)
 
     def __init__(self, settings):
+        self.buffer_threadhold = 100
+        self.buffer_tweet = {}
+        self.buffer_user = {}
+        self.buffer_following = {}
+
         # connect to mysql server
         host = settings['MYSQL_HOST']
         database = settings['MYSQL_DATABASE']
@@ -33,9 +38,14 @@ class SavetoMySQLPipeline(object):
         self.cnx = mysql.connector.connect(user=user, password=pwd, host=host,
                                 database=database, buffered=True)
         self.cursor = self.cnx.cursor()
+
         self.table_name_tweet = settings['MYSQL_TABLE_TWEET']
         self.table_name_user = settings['MYSQL_TABLE_USER']
         self.table_following = settings['MYSQL_TABLE_FOLLOWING']
+
+        self.create_tables()
+
+    def create_tables(self):
         create_table_tweet_query = "CREATE TABLE IF NOT EXISTS `" + self.table_name_tweet + "` (\
                 `ID` CHAR(20) PRIMARY KEY,\
                 `url` VARCHAR(140) NOT NULL,\
@@ -80,92 +90,50 @@ class SavetoMySQLPipeline(object):
         else:
             logger.info("Successfully created table.")
 
-    def find_one(self, table, value):
-        select_query =  "SELECT ID FROM " + table + " WHERE ID = " + value + ";"
-        try:
-            self.cursor.execute(select_query)
-        except mysql.connector.Error as err:
-            return False
-
-        if (self.cursor.fetchone() == None):
-            return False
-        else:
-            return True
-
-    def find_tweet(self, ID):
-        return self.find_one(self.table_name_tweet, ID)
-
-    def find_user(self, ID):
-        return self.find_one(self.table_name_user, ID)
-
-    def find_following(self, ID, following_id):
-        select_query =  "SELECT ID FROM " + self.table_following + " WHERE ID = %s AND following_id = %s;"
-        try:
-            self.cursor.execute(select_query, (ID, following_id))
-        except:
-            return False
-
-        if self.cursor.fetchone() is None:
-            return False
-        else:
-            return True
-
-
-    def insert_tweet(self, item):
-
+    def insert_tweets(self, items):
         keys = ('ID', 'url', 'datetime', 'text', 'user_id', 'usernameTweet', 'nbr_retweet',
             'nbr_favorite', 'nbr_reply', 'has_image', 'image', 'has_video', 'video',
             'has_media', 'media', 'is_reply', 'is_retweet') #item.keys()
 
-        insert_query =  "INSERT INTO " + self.table_name_tweet + " (" + ', '.join(keys) + " )"
+        insert_query =  "INSERT IGNORE INTO " + self.table_name_tweet + " (" + ', '.join(keys) + " )"
         insert_query += " VALUES ( " + ",".join(("%s",) * len(keys)) +  " )"
 
         # True -> 1, False -> 0
-        vals = [item[k]*1 for k in keys]
+        vals = [[item[k]*1 for k in keys] for item in items]
 
         try:
-            logger.debug("Inserting tweet {}...".format(item['ID']))
-            self.cursor.execute(insert_query, vals)
+            logger.debug("Inserting tweet bulk size {}".format(len(vals)))
+            self.cursor.executemany(insert_query, vals)
             self.cnx.commit()
         except mysql.connector.Error as err:
             logger.error(err.msg)
         else:
             logger.debug("Successfully inserted.")
 
-    def insert_user(self, item):
-        ID = item['ID']
-        name = item['name']
-        screen_name = item['screen_name']
-        avatar = item['avatar']
-
-        insert_query =  "INSERT INTO " + self.table_name_user + " (ID, name, screen_name, avatar)"
+    def insert_users(self, items):
+        insert_query =  "INSERT IGNORE INTO " + self.table_name_user + " (ID, name, screen_name, avatar)"
         insert_query += " VALUES ( %s, %s, %s, %s )"
 
-        vals = (ID, name, screen_name, avatar)
+        vals = [(item['ID'], item['name'], item['screen_name'], item['avatar']) for item in items]
 
         try:
-            logger.debug("Inserting user {}...".format(ID))
-            self.cursor.execute(insert_query, vals)
+            logger.debug("Inserting user bulk size {}".format(len(vals)))
+            self.cursor.executemany(insert_query, vals)
             self.cnx.commit()
         except mysql.connector.Error as err:
             logger.error(err.msg)
         else:
             logger.debug("Successfully inserted.")
 
+    def insert_followings(self, items):
+        vals = [(item['ID'], item['following_id'], item['following_name']) for item in items]
 
-    def insert_following(self, item):
-        ID = item['ID']
-        following_id = item['following_id']
-        following_name = item['following_name']
-
-        insert_query =  "INSERT INTO " + self.table_following + " (ID, following_id, following_name)"
-        insert_query += " VALUES ( %s, %s, %s )"
-
-        vals = (ID, following_id, following_name)
+        insert_query =  "INSERT IGNORE INTO " + self.table_following + \
+                " (ID, following_id, following_name) VALUES ( %s, %s, %s )"
 
         try:
-            logger.debug("Inserting following {} - {} - {}...".format(ID, following_id, following_name))
-            self.cursor.execute(insert_query, vals)
+            logger.debug("Inserting following bulk size {}".format(len(vals)))
+            self.cursor.executemany(insert_query, vals)
             self.cnx.commit()
         except mysql.connector.Error as err:
             logger.error(err.msg)
@@ -174,26 +142,32 @@ class SavetoMySQLPipeline(object):
 
     def process_item(self, item, spider):
         if isinstance(item, Tweet):
-            dbItem = self.find_tweet(item['ID'])
-            if dbItem:
-                logger.debug("tweet already exists:%s" %item['url'])
-            else:
-                self.insert_tweet(dict(item))
-                logger.debug("Add tweet:%s" %item['url'])
+            self.buffer_tweet[item['ID']] = dict(item)
+            logger.debug("Add tweet to buffer: {}".format(item['url']))
         elif isinstance(item, User):
-            dbItem = self.find_user(item['ID'])
-            if dbItem:
-                logger.debug("user already exists:%s" %item['name'])
-            else:
-                self.insert_user(dict(item))
-                logger.debug("Add user:%s" %item['name'])
+            self.buffer_user[item['ID']] = dict(item)
+            logger.debug("Add user to buffer: {}".format(item['name']))
         elif isinstance(item, Following):
-            dbItem = self.find_following(item['ID'], item['following_id'])
-            if dbItem:
-                logger.debug("following relationship already exists:%s" % item['following_name'])
-            else:
-                self.insert_following(dict(item))
-                logger.debug("Add following: {} - {}".format(item['ID'], item['following_name']))
+            self.buffer_following[item['ID'] + '<==>' + item['following_id']] = dict(item)
+            logger.debug("Add following to buffer: {} - {}".format(item['ID'], item['following_name']))
+
+        if len(self.buffer_tweet) > self.buffer_threadhold:
+            self.insert_tweets(self.buffer_tweet.values())
+            self.buffer_tweet = {}
+        if len(self.buffer_user) > self.buffer_threadhold:
+            self.insert_users(self.buffer_user.values())
+            self.buffer_user = {}
+        if len(self.buffer_following) > self.buffer_threadhold:
+            self.insert_followings(self.buffer_following.values())
+            self.buffer_following = {}
+
+    def close_spider(self, spider):
+        logger.warning('Save buffered data before shutdown!')
+        print("Don't any thing, saving buffered data!")
+        self.insert_tweets(self.buffer_tweet.values())
+        self.insert_users(self.buffer_user.values())
+        self.insert_followings(self.buffer_following.values())
+        logger.warning('Save buffered data done!')
 
 
 class SaveToFilePipeline(object):
@@ -204,7 +178,6 @@ class SaveToFilePipeline(object):
         self.saveUserPath = settings['SAVE_USER_PATH']
         mkdirs(self.saveTweetPath) # ensure the path exists
         mkdirs(self.saveUserPath)
-
 
     def process_item(self, item, spider):
         if isinstance(item, Tweet):
@@ -230,7 +203,6 @@ class SaveToFilePipeline(object):
                 logger.debug("Add user:%s" %item['screen_name'])
         else:
             logger.info("Item type is not recognized! type = %s" %type(item))
-
 
     def save_to_file(self, item, fname):
         ''' input: 
