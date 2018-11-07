@@ -50,6 +50,7 @@ class FollowingSpider(CrawlSpider):
     def start_requests(self):
         # can not connect in __init__ because crawler is not binded before construct
         self.crawler.signals.connect(self.spider_closed, signal=signals.spider_closed)
+        self.limit = self.settings.get('SPIDER_FOLLOWING_LIMIT', 2000)
 
         yield http.Request("https://twitter.com/login?lang=en", \
                         meta={'cookiejar': 1}, callback=self.pre_login)
@@ -117,11 +118,11 @@ class FollowingSpider(CrawlSpider):
 
         for ID, name in cursor.fetchall():
             if ID in self.finished:
-                logger.info('{}/{} already crawled, skip!'.format(name, ID))
+                logger.info('@{} ({}) already crawled, skip!'.format(name, ID))
             else:
-                yield self.gen_request(ID, name, self.parse)
+                yield self.gen_request({'cookiejar': 1, 'ID': ID, 'name': name, 'count': 0}, self.parse)
 
-    def gen_request(self, ID, name, callback, max_pos='-1'):
+    def gen_request(self, meta, callback, max_pos='-1'):
         data = {
             'include_available_features': '1',
             'include_entities': '0',
@@ -129,11 +130,14 @@ class FollowingSpider(CrawlSpider):
             'reset_error_state': 'false'
         }
 
-        return http.Request("https://twitter.com/{}/following/users?".format(name) + urlencode(data), \
-                        meta={'cookiejar': 1, 'ID': ID, 'name': name}, callback=callback)
+        return http.Request("https://twitter.com/{}/following/users?".format(meta['name']) + urlencode(data), \
+                        meta=meta, callback=callback)
 
     def parse(self, response):
-        ID = response.meta['ID']
+        meta = response.meta
+        ID = meta['ID']
+        name = meta['name']
+        count = meta['count']
         data = json.loads(response.text)
         min_position = data['min_position']
         has_more = data['has_more_items']
@@ -148,19 +152,26 @@ class FollowingSpider(CrawlSpider):
              card.xpath('@data-screen-name').extract_first())
             for card in profile_cards)
 
+        cnt = 0
         for fi, fn in followings:
+            cnt = cnt + 1
             follow = Following()
             follow['ID'] = ID
             follow['following_id'] = fi
             follow['following_name'] = fn
             yield follow
 
-        if has_more and min_position:
-            yield self.gen_request(ID, response.meta['name'], self.parse, min_position)
+        count = count + cnt
+        meta['count'] = count
+        if has_more and min_position and count < self.limit:
+            yield self.gen_request(meta, self.parse, min_position)
         else:
             self.finished.add(ID)
-            logger.info('[{}/{}] crawled user id.{} name.{} .'.format(len(self.finished),
-                    self.total_cnt, ID, response.meta['name']))
+            if count >= self.limit:
+                logger.info('@{} has too many followings, cut off at {}'.format(
+                    name, count))
+            logger.info('[{}/{}] crawled user @{} ({}), crawl count: {}'.format(
+                len(self.finished), self.total_cnt, name, ID, count))
 
     # todo: call this before shutdown for safety
     def spider_closed(self, spider, reason):
