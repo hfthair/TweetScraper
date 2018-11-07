@@ -103,7 +103,7 @@ class FollowingSpider(CrawlSpider):
         database = self.settings.get('MYSQL_DATABASE')
         user = self.settings.get('MYSQL_USER')
         pwd = self.settings.get('MYSQL_PASSWORD', None)
-        if not pwd:
+        if pwd is None:
             pwd = input('please input password for {} @database: '.format(user))
             print('please add MYSQL_PASSWORD in settings.py')
         else:

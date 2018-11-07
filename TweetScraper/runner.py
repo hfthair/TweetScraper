@@ -48,7 +48,7 @@ if __name__ == '__main__':
     database = settings.get('MYSQL_DATABASE')
     user = settings.get('MYSQL_USER')
     pwd = settings.get('MYSQL_PASSWORD', None)
-    if not pwd:
+    if pwd is None:
         pwd = input('please input password for {} @database: '.format(user))
         # mark: use setting of spider at from_crawl in piplines.py so that this will work
         settings.set('MYSQL_PASSWORD', pwd, 'spider')

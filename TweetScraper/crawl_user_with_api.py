@@ -56,7 +56,7 @@ if __name__ == '__main__':
     database = settings.get('MYSQL_DATABASE')
     user = settings.get('MYSQL_USER')
     pwd = settings.get('MYSQL_PASSWORD', None)
-    if not pwd:
+    if pwd is None:
         pwd = input('please input password for {} @database: '.format(user))
     else:
         print('use password in settings.py')

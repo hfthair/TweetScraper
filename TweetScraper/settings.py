@@ -21,13 +21,9 @@ ITEM_PIPELINES = {
     'TweetScraper.pipelines.SavetoMySQLPipeline':100, # replace `SaveToFilePipeline` with this to use MySQL
 }
 
-# Enable or disable downloader middlewares
-# See https://doc.scrapy.org/en/latest/topics/downloader-middleware.html
-# DOWNLOADER_MIDDLEWARES = {
-#    'scrapy.downloadermiddlewares.cookies.CookiesMiddleware': 543,
-# }
+# CONCURRENT_REQUESTS = 16
 
-# HTTPERROR_ALLOWED_CODES = [400]
+SPIDER_FOLLOWING_LIMIT = 2000
 
 # settings for where to save data on disk
 SAVE_TWEET_PATH = './Data/tweet/'
@@ -37,14 +33,14 @@ SAVE_USER_PATH = './Data/user/'
 MYSQL_HOST = 'localhost'
 MYSQL_DATABASE = 'tweets'
 MYSQL_USER = 'zhang'
-# MYSQL_PASSWORD = ''
+MYSQL_PASSWORD = None
 MYSQL_TABLE_TWEET = 'tweet'
 MYSQL_TABLE_USER = 'user'
 MYSQL_TABLE_FOLLOWING = 'following'
 
 # for twitter login
 TWITTER_ACCOUNT = 'zhang96084371'
-# TWITTER_PASSWORD = ''
+TWITTER_PASSWORD = None
 
 # # settings for mongodb
 # MONGODB_SERVER = "127.0.0.1"

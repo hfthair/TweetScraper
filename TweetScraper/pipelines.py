@@ -26,10 +26,8 @@ class SavetoMySQLPipeline(object):
         host = settings['MYSQL_HOST']
         database = settings['MYSQL_DATABASE']
         user = settings['MYSQL_USER']
-        pwd = ''
-        if 'MYSQL_PASSWORD' in settings:
-            pwd = settings['MYSQL_PASSWORD']
-        else:
+        pwd = settings.get('MYSQL_PASSWORD', None)
+        if pwd is None:
             pwd = input("Mysql Password: ")
             print('please add MYSQL_PASSWORD in settings.py')
         self.cnx = mysql.connector.connect(user=user, password=pwd, host=host,
