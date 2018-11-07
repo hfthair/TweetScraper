@@ -33,17 +33,31 @@ def start_runner_inner(setti, name, limit, q):
         q.put(e)
 
 if __name__ == '__main__':
+    import os
+    import pickle
     import sys
     limit = None
     if len(sys.argv) > 1:
         limit = int(sys.argv[1])
 
+    pickle_name = '{}.pickle'.format(os.path.basename(__file__))
+
     i = input('Crawl history tweets with {} limits? (y/n)'.format(
-        'NO' if limit is None else limit
-    ))
+        'NO' if limit is None else limit))
     if i.lower() != 'y':
         print('User cancelled!')
         sys.exit(0)
+
+    finished = set()
+    if os.path.isfile(pickle_name):
+        i = input('Progress file detected, load to current runner? (y/n) ')
+        if i.lower() == 'y':
+            with open(pickle_name, 'rb') as f:
+                finished = pickle.load(f)
+        else:
+            i = input('Are you sure you want to ignore? (y/n) ')
+            if i.lower() != 'y':
+                sys.exit(0)
 
     database = settings.get('MYSQL_DATABASE')
     user = settings.get('MYSQL_USER')
@@ -58,23 +72,6 @@ if __name__ == '__main__':
                             host='localhost',
                             database=database, buffered=True)
     cursor = cnx.cursor()
-
-    table_mark_name = 'temp_user_mark'
-
-    # todo: remove this table and use pickle
-    # create talbe to save the progress
-    create_table_mark_query =   "CREATE TABLE IF NOT EXISTS `" + table_mark_name + "` (\
-            `ID` CHAR(20) PRIMARY KEY,\
-            `name` VARCHAR(140) NOT NULL\
-            ) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;"
-    try:
-        print('create table {} to save the progress so that you can stop/resume the runner at any time.'.format(table_mark_name))
-        cursor.execute(create_table_mark_query)
-        cnx.commit()
-    except mysql.connector.Error as err:
-        print(err.msg)
-    else:
-        print("Successfully created table.")
 
     settings.set('MYSQL_TABLE_TWEET', table_all_tweets, 'spider')
     configure_logging(settings)
@@ -97,15 +94,6 @@ if __name__ == '__main__':
             print('Terminated by user.')
             raise e
 
-    def should_skip(ID):
-        try:
-            cursor.execute("SELECT ID FROM {} WHERE ID = %s".format(table_mark_name), (ID, ))
-            if cursor.fetchone():
-                return True
-        except mysql.connector.Error:
-            traceback.print_exc()
-        return False
-
     total = cursor.rowcount
     scrawl_count = 0
     skip_count = 0
@@ -116,15 +104,16 @@ if __name__ == '__main__':
 
         try:
             # check if crawled
-            if should_skip(ID):
+            if ID in finished:
                 print('alread crawled, skip!')
                 skip_count = skip_count + 1
                 continue
 
             start_runner(name, limit)
 
-            cursor.execute("INSERT INTO {} (ID, name) VALUES (%s, %s)".format(table_mark_name), (ID, name))
-            cnx.commit()
+            finished.add(ID)
+            with open(pickle_name, 'wb') as f:
+                pickle.dump(finished, f)
         except KeyboardInterrupt:
             sys.exit(-1)
         except:
@@ -135,12 +124,3 @@ if __name__ == '__main__':
         print('finish {}'.format(name))
 
     print('Done. ===> finished {} | failed {} | skipped: {}.'.format(scrawl_count, fail_count, skip_count))
-
-    if fail_count == 0:
-        print('trying to delete temp table')
-        try:
-            cursor.execute("DROP TABLE `" + table_mark_name + "`;")
-            cnx.commit()
-        except:
-            print('error occurs when trying delete temp table!')
-
