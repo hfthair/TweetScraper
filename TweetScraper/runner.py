@@ -5,6 +5,7 @@ history tweets will be saved in table |history_tweet|.
 limit can be set, usage:
     python runner.py limit[int]
 '''
+import datetime
 import logging
 import traceback
 import mysql.connector
@@ -22,11 +23,11 @@ from spiders.search import SearchSpider
 
 table_all_tweets = 'history_tweet'
 
-def start_runner_inner(setti, name, limit, q):
+def start_runner_inner(setti, name, until, limit, q):
     try:
         # settings
         runner = CrawlerProcess(setti)
-        runner.crawl(SearchSpider, query='from:{}'.format(name), save_user=False, limit=limit)
+        runner.crawl(SearchSpider, query='from:{} until:{}'.format(name, until), save_user=False, limit=limit)
         runner.start()
         q.put(None)
     except Exception as e:
@@ -73,6 +74,7 @@ if __name__ == '__main__':
                             database=database, buffered=True)
     cursor = cnx.cursor()
 
+    table_tweet = settings.get('MYSQL_TABLE_TWEET')
     settings.set('MYSQL_TABLE_TWEET', table_all_tweets, 'spider')
     configure_logging(settings)
 
@@ -80,9 +82,9 @@ if __name__ == '__main__':
     query = "SELECT ID, name FROM {};".format(table_user)
     cursor.execute(query)
 
-    def start_runner(name, limit):
+    def start_runner(name, until, limit):
         q = Queue()
-        p = Process(target=start_runner_inner, args=(settings, name, limit, q))
+        p = Process(target=start_runner_inner, args=(settings, name, until, limit, q))
         try:
             p.start()
             res = q.get()
@@ -109,11 +111,26 @@ if __name__ == '__main__':
                 skip_count = skip_count + 1
                 continue
 
-            start_runner(name, limit)
+            q = 'select datetime from {} where user_id = %s order by datetime;'.format(table_tweet)
+            cs = cnx.cursor()
+            cs.execute(q, (ID,))
+            r = cs.fetchone()
+            if r:
+                date = r[0]
+                dt = datetime.datetime.strptime(date, '%Y-%m-%d %H:%M:%S')
+                dt_prev = dt # - datetime.timedelta(days=1)
+                
+                print('tweet date = {}, query until: {}'.format(
+                    dt.strftime('%Y-%m-%d %H:%M:%S'), dt_prev.strftime('%Y-%m-%d')))
 
-            finished.add(ID)
-            with open(pickle_name, 'wb') as f:
-                pickle.dump(finished, f)
+                start_runner(name, dt_prev.strftime('%Y-%m-%d'), limit)
+
+                finished.add(ID)
+                with open(pickle_name, 'wb') as f:
+                    pickle.dump(finished, f)
+            else:
+                print('tweet date not found, skip!')
+                skip_count = skip_count + 1
         except KeyboardInterrupt:
             sys.exit(-1)
         except:
